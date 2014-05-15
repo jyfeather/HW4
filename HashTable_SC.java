@@ -9,7 +9,7 @@ import providedCode.*;
  * @email roygu93@uw.edu
  * 
  * Hash table that stores frequencies of words from a given file. This 
- * hash table uses separate chaining to do so. 
+ * hash table uses separate chaining to handle collisions
  */
 public class HashTable_SC extends DataCounter {
 	private int size;	//keeps track of number of unique words in the table
@@ -43,7 +43,8 @@ public class HashTable_SC extends DataCounter {
 			index++;
 			HashNode[] newTable = new HashNode[PRIMES[index]];
 			
-			//for each node in the old table
+			//for each node in the old table, add it to the new table in their new 
+			//respective indexes
 			for(HashNode node : table) {
 				
 				//for each linked node in the given bucket, add them to the new table
@@ -87,6 +88,8 @@ public class HashTable_SC extends DataCounter {
 				traverse = traverse.next;
 			}
 			
+			//if the node is not found, add it as the first node in the given bucket
+			//while setting the old nodes in the bucket as the new node's next value
 			if(!found) {
 				HashNode temp = new HashNode(new DataCount(data, 1));
 				temp.next = table[hashIndex];
@@ -96,12 +99,12 @@ public class HashTable_SC extends DataCounter {
 		}
 	}
 
-	//post: returns the number of elements in the table
+	//post: returns the number of unique elements in the table
 	public int getSize() {
 		return size;
 	}
 
-	//post: returns the frequency of the given string in the table
+	//post: returns the frequency of the given string in the table, 0 if its not in the table
 	public int getCount(String data) {		
 		int count = 0;
 		
@@ -124,10 +127,10 @@ public class HashTable_SC extends DataCounter {
 		return new SCIterator();
 	}
 	
-	//inner class hash node to handle collisions usingn separate chaining
+	//inner class hash node to handle collisions using separate chaining
 	private class HashNode {
-		public DataCount data;       
-	    public HashNode next;  
+		public DataCount data;	//datacount for a given string and count of the string
+	    public HashNode next;  //next node in the list
 
 	    public HashNode(DataCount data) {
 	        this(data, null);
@@ -141,16 +144,18 @@ public class HashTable_SC extends DataCounter {
 	
 	//inner class to create an iterator
 	private class SCIterator implements SimpleIterator {
-		private int currentNumberOfVals;
-		private int itrIndex;
-		private HashNode current;
+		private int currentNumberOfVals;	//keeps track of the number of values iterated over
+		private int itrIndex;	//keeps track of the index of the iterator
+		private HashNode current;	//keeps track of the current iterator node
 		
-		//post: constructs the iterator 
+		//post: constructs the iterator, setting index as 0, and number of values in the 
+		//iterator as 0. It also sets the hash node field as the first node found in the 
+		//table
 		public SCIterator() {
 			currentNumberOfVals = 0;
 			itrIndex = 0;
 			
-			//searches for the first non-null index
+			//searches for the first non-null index and sets the current node as that index's node
 			while(itrIndex < table.length && table[itrIndex] == null) {
 				if(itrIndex != table.length - 1)
 					itrIndex++;
@@ -158,12 +163,15 @@ public class HashTable_SC extends DataCounter {
 			current = table[itrIndex];
 		}
 		
-		//post: 
+		//pre: hasNext is true; there is a next value
+		//post: returns the next data count value in the iterator
 		public DataCount next() {
 			HashNode temp = current;
 			currentNumberOfVals++;
 			
 			if(hasNext()) {
+				//if current node has no next value, go to the next non-null index in the table
+				//and set current to that new index node. Otherwise, set current to the next node
 				if(current.next == null) {
 					itrIndex++;
 					while(itrIndex < table.length && table[itrIndex] == null) {
@@ -178,7 +186,7 @@ public class HashTable_SC extends DataCounter {
 			return temp.data;
 		}
 
-	
+		//post: returns true if there is a next node to iterate through, false otherwise
 		public boolean hasNext() {
 			return currentNumberOfVals < size;
 		}
