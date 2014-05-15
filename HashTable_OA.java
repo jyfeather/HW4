@@ -1,73 +1,140 @@
+
 package shake_n_bacon;
 
 import providedCode.*;
 
 /**
- * @author <name>
- * @UWNetID <uw net id>
- * @studentID <id number>
- * @email <email address>
+ * @author Ian Bruce
+ * @UWNetID brucei
+ * @studentID 1168370
+ * @email brucei@uw.edu
  * 
- *        TODO: Replace this comment with your own as appropriate.
- * 
- *        1. You may implement HashTable with open addressing discussed in
- *        class; You can choose one of those three: linear probing, quadratic
- *        probing or double hashing. The only restriction is that it should not
- *        restrict the size of the input domain (i.e., it must accept any key)
- *        or the number of inputs (i.e., it must grow as necessary).
- * 
- *        2. Your HashTable should rehash as appropriate (use load factor as
- *        shown in the class).
- * 
- *        3. To use your HashTable for WordCount, you will need to be able to
- *        hash strings. Implement your own hashing strategy using charAt and
- *        length. Do NOT use Java's hashCode method.
- * 
- *        4. HashTable should be able to grow at least up to 200,000. We are not
- *        going to test input size over 200,000 so you can stop resizing there
- *        (of course, you can make it grow even larger but it is not necessary).
- * 
- *        5. We suggest you to hard code the prime numbers. You can use this
- *        list: http://primes.utm.edu/lists/small/100000.txt NOTE: Make sure you
- *        only hard code the prime numbers that are going to be used. Do NOT
- *        copy the whole list!
- * 
- *        TODO: Develop appropriate tests for your HashTable.
+ * A hash table that is made to store word counts taken from text files.
  */
 public class HashTable_OA extends DataCounter {
 
+	// the array that stores words and their respective counts 
 	private DataCount[] dataArray;
+	
+	// the amount of distinct words in the table
 	private int size;
+	
+	// used to compare two strings
 	private Comparator<String> c;
+	
+	// the the class for the hash function of this table. Takes in a 
+	// word and returns the index of where the corresponding word would appear in the table
 	private Hasher h;
+	
+	// the possible hash table sizes that the table can resize to
+	private static final int[] PRIMES = 
+		{11, 23, 47, 97, 199, 401, 809, 1667, 3307, 6833, 16993, 34403, 68891, 128591, 199999};
+	
+	// the index of the number in the array PRIMES used for the current table size
+	private int sizeIndex;
+	
+	// initializes the comparator and hasher to the passed values.
+	// Sets the size to initially be 0
 	public HashTable_OA(Comparator<String> c, Hasher h) {
+		sizeIndex = 0;
+		dataArray = new DataCount[PRIMES[sizeIndex]];
 		this.c = c;
 		this.h = h;
 		size = 0;
 	}
 
-	@Override
-	public void incCount(String data) {
-		Math.n
-		int index = h.hash(data);
-		int comparing = c.compare(data, this.dataArray[index].data);
-		if(comparing == 0)
-			this.dataArray[index].count++;
-		
+	// adds one to the count of the specified word
+	public void incCount(String data) 
+	{
+		if((double)size / PRIMES[sizeIndex] >= .75)
+		{
+			SimpleIterator iter = getIterator();
+			sizeIndex++;
+			int newSize = PRIMES[sizeIndex];
+			DataCount[] newDataArray = new DataCount[newSize];
+			while(iter.hasNext())
+			{
+				DataCount dataVal = iter.next();
+				int index = h.hash(dataVal.data) % newSize;
+				while(newDataArray[index] != null)
+				{
+					index++;
+					if(index == newSize)
+						index = 0;
+				}
+				newDataArray[index] = dataVal;
+			}
+			dataArray = newDataArray;
+		}
+		DataCount corresponding = getData(data);
+		corresponding.count++;
 	}
 
-	@Override
+	// returns the amount of distinct words in the table
 	public int getSize() {
 		return size;
 	}
 
-	@Override
+	// returns the count of the specified word
 	public int getCount(String data) {
-		int index = h.hash(data);
-		return this.dataArray[index].count;
+		return getData(data).count;
 	}
 
-	@Override
+	// returns a SimpleIterator that can iterate over the DataCounts in this table
 	public SimpleIterator getIterator() {
-		SimpleIterator iter = new SimpleIterator();
+		return new OAIterator();
+	}
+	
+	// returns the DataCount that corresponds with the passed word
+	private DataCount getData(String word)
+	{
+		int index = h.hash(word) % PRIMES[sizeIndex];
+		while(dataArray[index] != null && 
+			c.compare(word, dataArray[index].data) != 0)
+		{
+			index++;
+			if(index == dataArray.length)
+				index = 0;
+		}
+		if(dataArray[index] == null)
+		{
+			dataArray[index] = new DataCount(word, 0);
+			size++;
+		}
+		return dataArray[index];
+	}
+	
+	// the iterator that iterates over elements in this table
+	private class OAIterator implements SimpleIterator
+	{
+		// the current number of values that the iterator has iterated over
+		private int currentNumberOfVals;
+		
+		// the current index of the hash table that the iterator is looking at
+		private int index;
+		
+		// sets the current number of values to be zero and has the iterator look
+		// at index 0 on the first call of next()
+		public OAIterator()
+		{
+			currentNumberOfVals = 0;
+			index = -1;
+		}
+		
+		// returns true if the iterator hasn't iterated over the last element in the table
+		public boolean hasNext()
+		{
+			return currentNumberOfVals < size;
+		}
+		
+		// returns the next non-null DataCount in the table
+		public DataCount next()
+		{
+			index++;
+			while(dataArray[index] == null)
+				index++;
+			currentNumberOfVals++;
+			return dataArray[index];
+		}
+	}
 }
