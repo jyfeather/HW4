@@ -3,95 +3,134 @@ package shake_n_bacon;
 import providedCode.*;
 
 /**
- * @author <name>
- * @UWNetID <uw net id>
- * @studentID <id number>
- * @email <email address>
+ * @author Roy Gu	
+ * @UWNetID roygu93
+ * @studentID 1125302
+ * @email roygu93@uw.edu
  * 
- *        TODO: Replace this comment with your own as appropriate.
- * 
- *        1. You may implement HashTable with separate chaining discussed in
- *        class; the only restriction is that it should not restrict the size of
- *        the input domain (i.e., it must accept any key) or the number of
- *        inputs (i.e., it must grow as necessary).
- * 
- *        2. Your HashTable should rehash as appropriate (use load factor as
- *        shown in the class).
- * 
- *        3. To use your HashTable for WordCount, you will need to be able to
- *        hash strings. Implement your own hashing strategy using charAt and
- *        length. Do NOT use Java's hashCode method.
- * 
- *        4. HashTable should be able to grow at least up to 200,000. We are not
- *        going to test input size over 200,000 so you can stop resizing there
- *        (of course, you can make it grow even larger but it is not necessary).
- * 
- *        5. We suggest you to hard code the prime numbers. You can use this
- *        list: http://primes.utm.edu/lists/small/100000.txt NOTE: Make sure you
- *        only hard code the prime numbers that are going to be used. Do NOT
- *        copy the whole list!
- * 
- *        TODO: Develop appropriate tests for your HashTable.
+ * Hash table that stores frequencies of words from a given file. This 
+ * hash table uses separate chaining to do so. 
  */
-
 public class HashTable_SC extends DataCounter {
-	private int size;
-	private HashNode[] table;
-	private SimpleIterator itr;
-	private Comparator<String> c;
-	private Hasher h;
+	private int size;	//keeps track of number of unique words in the table
+	private HashNode[] table;	//array to store each unique word and its count
+	private Comparator<String> comparator;	//comparator to compare two strings
+	private Hasher hasher;	//hasher to hash a string
+	
+	//array of integers for the prime number capacities for the table
 	private static final int[] PRIMES = 
 		{11, 23, 47, 97, 199, 401, 809, 1667, 3307, 6833, 16993, 34403, 68891, 128591, 199999};
-	private int index = 0;
+	private int index;	//index for the prime numbers array
 
+	//post: constructs a new hash node table with initial size of 11, index of 0, and size of 0
 	public HashTable_SC(Comparator<String> c, Hasher h) {
 		table = new HashNode[PRIMES[index]];
-		this.c = c;
-		this.h = h;
-		
+		index = 0;
+		comparator = c;
+		hasher = h;
+		size = 0;
 	}
 
-	@Override
+	//post: if the word exists in the table, simply increase that word's count by 1, else
+	//create a new node with that word as the data, and its count as 1. Increase the size 
+	//of the array once the load factor is above 2. The new size of the array is the next 
+	//prime number in the prime number array. All nodes in the old array are moved to the 
+	//new array
 	public void incCount(String data) {
-		HashNode temp = table[data.hashCode() % table.length];
+		//if the load factor is above 2, increase the size of the table, keeping its
+		//old elements into new indexes
+		if((double) size / table.length > 2) {
+			index++;
+			HashNode[] newTable = new HashNode[PRIMES[index]];
+			
+			//for each node in the old table
+			for(HashNode node : table) {
+				
+				//for each linked node in the given bucket, add them to the new table
+				while(node != null) {
+					int hash = hasher.hash(node.data.data) % newTable.length;
+					
+					if(newTable[hash] == null)
+						newTable[hash] = new HashNode(node.data, null);
+					else {
+						newTable[hash] = new HashNode(node.data, newTable[hash]);
+					}
+					
+					node = node.next;
+				}		
+				
+			}
+			
+			table = newTable;
+		}
 		
-		while(temp != null) {
-			if(temp.data.data == data) {
-				temp.data.count += 1;
+		int hashIndex = hasher.hash(data) % table.length; 
+		
+		//if the node at the given index is null, create a new node with the given data
+		//else traverse through the nodes until the given data is found, and increase
+		//that data's count by 1
+		if(table[hashIndex] == null) {
+			table[hashIndex] = new HashNode(new DataCount(data, 1));
+			size++;
+		} else {
+			HashNode traverse = table[hashIndex];
+			boolean found = false;
+			
+			//while the node is not null, find the node with the given data, and increase
+			//its count by 1
+			while(traverse != null) {
+				if(comparator.compare(traverse.data.data, data) == 0) {
+					traverse.data.count += 1;
+					found = true;
+				}
+				
+				traverse = traverse.next;
+			}
+			
+			if(!found) {
+				HashNode temp = new HashNode(new DataCount(data, 1));
+				temp.next = table[hashIndex];
+				table[hashIndex] = temp;
+				size++;
 			}
 		}
 	}
 
-	@Override
+	//post: returns the number of elements in the table
 	public int getSize() {
 		return size;
 	}
 
-	@Override
-	public int getCount(String data) {
-		HashNode temp = table[data.hashCode() % table.length];
+	//post: returns the frequency of the given string in the table
+	public int getCount(String data) {		
 		int count = 0;
 		
+		HashNode temp = table[hasher.hash(data) % table.length];
+		
+		//while the temp is not null, traverse through the nodes until the node
+		//with the given data is found, and return that node's count
 		while(temp != null) {
-			if(temp.data.data == data) {
+			if(comparator.compare(temp.data.data, data) == 0) 
 				count = temp.data.count;
-			}
+			
+			temp = temp.next;
 		}
 		
 		return count;
 	}
 
-	@Override
+	//post: returns an iterator implemented as an inner class
 	public SimpleIterator getIterator() {
-		return itr;
+		return new SCIterator();
 	}
 	
+	//inner class hash node to handle collisions usingn separate chaining
 	private class HashNode {
 		public DataCount data;       
 	    public HashNode next;  
 
 	    public HashNode(DataCount data) {
-	        this(data,null);
+	        this(data, null);
 	    }
 
 	    public HashNode(DataCount data, HashNode next) {
@@ -99,5 +138,49 @@ public class HashTable_SC extends DataCounter {
 	        this.next = next;
 	    }
 	}
+	
+	//inner class to create an iterator
+	private class SCIterator implements SimpleIterator {
+		private int currentNumberOfVals;
+		private int itrIndex;
+		private HashNode current;
+		
+		//post: constructs the iterator 
+		public SCIterator() {
+			currentNumberOfVals = 0;
+			itrIndex = 0;
+			
+			//searches for the first non-null index
+			while(itrIndex < table.length && table[itrIndex] == null) {
+				if(itrIndex != table.length - 1)
+					itrIndex++;
+			}
+			current = table[itrIndex];
+		}
+		
+		//post: 
+		public DataCount next() {
+			HashNode temp = current;
+			currentNumberOfVals++;
+			
+			if(hasNext()) {
+				if(current.next == null) {
+					itrIndex++;
+					while(itrIndex < table.length && table[itrIndex] == null) {
+						itrIndex++;
+					}
+					current = table[itrIndex];
+				} else {
+					current = current.next;
+				}
+			}
+			
+			return temp.data;
+		}
 
+	
+		public boolean hasNext() {
+			return currentNumberOfVals < size;
+		}
+	}
 }
