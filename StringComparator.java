@@ -3,10 +3,10 @@ package shake_n_bacon;
 import providedCode.*;
 
 /**
- * @author <name>
- * @UWNetID <uw net id>
- * @studentID <id number>
- * @email <email address>
+ * @author Roy Gu
+ * @UWNetID roygu93
+ * @studentID 1125302
+ * @email roygu93@uw.edu
  * 
  *        TODO: REPLACE this comment with your own as appropriate.
  * 
@@ -29,13 +29,15 @@ import providedCode.*;
  */
 public class StringComparator implements Comparator<String> {
 
-	/**
-	 * TODO Replace this comment with your own as appropriate.
-	 */
-	@Override
+	//post: returns a negative number when the first given argument alphabetically comes
+	//before the second given argument, a 0 if the two arguments are exactly the same, and
+	//a positive number when the second argument comes alphabetically before the first argument
 	public int compare(String s1, String s2) {
 		int index = 0;
 		
+		//while the index is less than the length of both given strings, traverse through
+		//the same index character of both strings until unequal characters are found, then 
+		//return the comparison of the characters. 
 		while(index < s1.length() && index < s2.length()) {
 			if(s1.charAt(index) - s2.charAt(index) != 0)
 				return s1.charAt(index) - s2.charAt(index);
@@ -43,6 +45,8 @@ public class StringComparator implements Comparator<String> {
 				index++;
 		}
 		
+		//if the strings are equals in length, return 0, else if s1 is longer, return 1,
+		//else return -1
 		if(s1.length() == s2.length()) 
 			return 0;
 		else if (s1.length() > s2.length())
