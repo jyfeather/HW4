@@ -36,9 +36,18 @@ public class StringComparator implements Comparator<String> {
 	public int compare(String s1, String s2) {
 		int index = 0;
 		
-		while(index < s1.length() && s1.charAt(index) == s2.charAt(index)) 
-			index++;
+		while(index < s1.length() && index < s2.length()) {
+			if(s1.charAt(index) - s2.charAt(index) != 0)
+				return s1.charAt(index) - s2.charAt(index);
+			else
+				index++;
+		}
 		
-		return s1.charAt(index) - s2.charAt(index);
+		if(s1.length() == s2.length()) 
+			return 0;
+		else if (s1.length() > s2.length())
+			return 1;
+		else 
+			return -1;
 	}
 }
