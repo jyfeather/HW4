@@ -3,17 +3,16 @@ package shake_n_bacon;
 import providedCode.Hasher;
 
 /**
- * @author <name>
- * @UWNetID <uw net id>
- * @studentID <id number>
- * @email <email address>
+ * @author Roy Gu
+ * @UWNetID roygu93
+ * @studentID 1125302
+ * @email roygu93@uw.edu
+ * 
+ * Class to hash a given string value
  */
 public class StringHasher implements Hasher {
 
-	/**
-	 * TODO Replace this comment with your own as appropriate.
-	 */
-	@Override
+	//post: returns the sum of all characters in the given string value
 	public int hash(String str) {
 		int hashVal = 0;
 		
