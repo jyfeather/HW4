@@ -91,9 +91,7 @@ public class HashTable_SC extends DataCounter {
 			//if the node is not found, add it as the first node in the given bucket
 			//while setting the old nodes in the bucket as the new node's next value
 			if(!found) {
-				HashNode temp = new HashNode(new DataCount(data, 1));
-				temp.next = table[hashIndex];
-				table[hashIndex] = temp;
+				table[hashIndex] = new HashNode(new DataCount(data, 1), table[hashIndex]);
 				size++;
 			}
 		}
